@@ -1,0 +1,13 @@
+
+Timeout to all proxy-methods
+Start all methods beginning with 'work'
+Check that nested calls via proxy works, i.e zp.hej.gustav()
+Handle each incomming command in separate thread, this is needed
+  so that socket can receive new commands. Keep cache of ongoing connections.
+Start and stop daemon from commandline
+await_reply flag, if False, return msg immediately without waiting for execution
+Lookup server that allows hostname to be left out if it is unique.
+Catch ctrl-c and exit nicely
+Pylint
+Fix doc for proxy-methods
+"""
