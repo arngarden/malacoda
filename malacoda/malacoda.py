@@ -31,7 +31,6 @@ from datetime import datetime, timedelta
 from zmq_socket import Socket
 from paramiko import SSHClient
 import proxy
-import psutil
 import signal
 from message import REPMessage, REQMessage, MSG_TYPES
 import pst_storage
@@ -329,8 +328,13 @@ def _get_port(name, **ssh_args):
         client.connect(host, **ssh_args)
         _, stdout, _ = client.exec_command(FIND_PID_CMD % name)
         pid = stdout.read().strip()
+        if '\n' in pid:
+            pid = pid.split('\n')[0]
+        print 'pid', repr(pid)
+        print FIND_PORT_CMD % pid
         _, stdout, _ = client.exec_command(FIND_PORT_CMD % pid)
         out = stdout.read()
+        print 'out', out
     port = out.split(':')[1].strip()
     return port
 

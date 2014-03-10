@@ -110,6 +110,11 @@ Testing and examples
 Basic unittests exist in the tests directory.
 The above example can be found in the examples directory.
 
+Requirements
+------------
+pip install setproctitle, cloud, paramiko, pyzmq
+It also requires lsof for remote lookup of port.
+
 Future improvements
 -------------------
  - Better handling of timeout and automatic reconnection if connection is lost.
