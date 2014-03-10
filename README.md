@@ -53,6 +53,7 @@ Initializing a daemon
 ---------------------
 You need to initialize the parent class in the constructor of your daemon, in its simplest form
 this is done as follows:
+
     super(MessageDaemon, self).__init__(self)
 
 Init can take a number of optional keyword arguments:
@@ -68,6 +69,7 @@ Init can take a number of optional keyword arguments:
  The run-method
  --------------
  You need to override the method _run in your daemon class. This method should define the main loop of your program and should follow this pattern:
+
     while self.running:
         # do work
     self.finished = True
@@ -80,7 +82,9 @@ Connecting to a running daemon
 After your daemon has started you can create a proxy that communicates with the daemon through a ZeroMQ-socket. This makes it possible to call methods and access variables in the daemon in almost the same way as if you had a real instance of the class. You can even connect to daemons that run on other servers by providing the hostname or IP when connecting.
 
 To connect to a running daemon, use the get-method in malacoda.py:
+
     d = malacoda.get(<daemon name>:<hostname>)
+
 You can leave out the hostname if the daemon runs on localhost.
 Any keyword arguments given to the get-method is forwarded to the SSH-clients connect-method, see the documentation [here](http://docs.paramiko.org/en/latest/api/client.html#paramiko.client.SSHClient.connect) for available commands. 
 
@@ -88,9 +92,12 @@ Calling methods and accessing variables
 ---------------------------------------
 When you have a proxy you can call methods and access variables on this.
 A keyword argument named *timeout* can be given to all method calls, this sets the timeout of the remote execution call to this many seconds.
+
     d.insert_message('hello world', timeout=2)
+
 The default timeout is None, meaning no timeout will be used.
 You can call methods, access class attributes, and set class attributes just as you would with a real instance of the class:
+
     print d.pst_counter
     d.pst_counter = 0
 
@@ -113,6 +120,7 @@ The above example can be found in the examples directory.
 Requirements
 ------------
 pip install setproctitle, cloud, paramiko, pyzmq
+
 It also requires lsof for remote lookup of port.
 
 Future improvements
