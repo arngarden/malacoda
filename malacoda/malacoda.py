@@ -330,11 +330,8 @@ def _get_port(name, **ssh_args):
         pid = stdout.read().strip()
         if '\n' in pid:
             pid = pid.split('\n')[0]
-        print 'pid', repr(pid)
-        print FIND_PORT_CMD % pid
         _, stdout, _ = client.exec_command(FIND_PORT_CMD % pid)
         out = stdout.read()
-        print 'out', out
     port = out.split(':')[1].strip()
     return port
 
