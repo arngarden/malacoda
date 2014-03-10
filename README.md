@@ -66,8 +66,8 @@ Init can take a number of optional keyword arguments:
  - pst_config: Dictionary for configurating the persistant storage. To activate persistant storage send in a dict containing the class name of the persistant storer and any parameters to the storer. Default is a persister that saves variables to a file every minute.
  - kwargs: Any remaining kwargs are sent into daemon.DaemonContext and can be used for more exact control of the daemon. (See [here](http://legacy.python.org/dev/peps/pep-3143/#daemoncontext-objects) for information about available parameters.)
 
- The run-method
- --------------
+The run-method
+--------------
 You need to override the method _run in your daemon class. This method should define the main loop of your program and should follow this pattern:
 
     while self.running:
