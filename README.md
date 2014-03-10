@@ -71,7 +71,7 @@ Init can take a number of optional keyword arguments:
  You need to override the method _run in your daemon class. This method should define the main loop of your program and should follow this pattern:
 
     while self.running:
-        # do work
+        do work
     self.finished = True
 
 The main loop will execute until *self.running* is set to False, which is done when someone calls the stop-method or kills the daemon with a KILL signal (TODO).
