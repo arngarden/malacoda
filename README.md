@@ -74,6 +74,7 @@ Init can take a number of optional keyword arguments:
         do work
     self.finished = True
 
+
 The main loop will execute until *self.running* is set to False, which is done when someone calls the stop-method or kills the daemon with a KILL signal (TODO).
 If you forget to set *self.finished = True* at the end, the daemon will never exit properly.
 
