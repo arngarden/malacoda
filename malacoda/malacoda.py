@@ -303,7 +303,7 @@ def get(name, **ssh_args):
 
 
 # TODO: this is perhaps not the best way..
-FIND_PID_CMD = "ps xm | awk '/%s/ {print $1}'"
+FIND_PID_CMD = "ps xa | awk '/[0-9] %s/ {print $1}'"
 FIND_PORT_CMD = "lsof -a -p%s | awk '/LISTEN/ {print $9}'"
 
 def _get_port(name, **ssh_args):
