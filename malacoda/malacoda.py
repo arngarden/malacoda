@@ -26,6 +26,7 @@ import threading
 import cPickle as pickle
 import socket
 import setproctitle
+from copy import deepcopy
 from subprocess import Popen, PIPE
 from datetime import datetime, timedelta
 from zmq_socket import Socket
@@ -47,7 +48,7 @@ class Malacoda(daemon.DaemonContext):
     DEFAULT_PST_CONFIG = {'class_name': 'PstFileStorage', 'frequency': timedelta(minutes=1)}
     
     def __init__(self, name=None, bind_address=None, port=None, daemonize=True,
-                 pst_config=None, **kwargs):
+                 pst_config=None, start_worker=True, **kwargs):
         """ Init Malacoda.
         Name of Malacoda can be overridden, else class name will be used.
         It is possible to override the address and port used for communicating with the Malacoda.
@@ -70,6 +71,7 @@ class Malacoda(daemon.DaemonContext):
          - pst_config (dict): Persistant storage class name and arguments to that class.
                               For example {'class_name': 'PstFileStorage',
                                            'frequency': timedelta(minutes=5)}
+         - start_worker (bool): If True, the _run-method will be executed at end of init.
          - kwargs: Optional keyword arguments that are sent to daemon.DaemonContext
          
         """
@@ -80,7 +82,7 @@ class Malacoda(daemon.DaemonContext):
         self.name = name or self.__class__.__name__
         setproctitle.setproctitle(self.name)
         self.daemonize = daemonize
-        pst_config = pst_config or self.DEFAULT_PST_CONFIG
+        pst_config = pst_config or deepcopy(self.DEFAULT_PST_CONFIG)
         try:
             class_name = pst_config.pop('class_name')
         except KeyError:
@@ -90,23 +92,34 @@ class Malacoda(daemon.DaemonContext):
         except AttributeError:
             raise MalacodaException('Unknown persistant storage class')
         self._load_pst()
-        self.run(bind_address, port)
+        self.run(bind_address, port, start_worker)
 
-    def run(self, bind_address, port=None):
-        """ Start message listener thread and main loop of daemon.
+    def run(self, bind_address, port=None, start_worker=True):
+        """ Daemonize, start message listener thread and main loop of daemon.
 
         Args:
          - bind_address (basestring): Optional host to bind message listener to.
          - port (int): Optional port to bind message listener.
+         - start_worker (bool): If True, call _run-method.
          
         """
         self.running = True
         if self.daemonize:
             self.open()
+        if start_worker:
+            self._start_msg_listener(bind_address, port)
+            self._run()
 
+    def _start_msg_listener(self, bind_address, port=None):
+        """ Start message listener thread.
+
+        Args:
+         - bind_address (basestring): Optional host to bind message listener to.
+         - port (int): Optional port to bind message listener.
+
+        """
         MsgListenerThread(self, bind_address=bind_address, port=port).start()
         threading.Thread(target=self._pst_handler).start()
-        self._run()
 
     def _run(self):
         """ Main loop that needs to be overriden.
@@ -268,7 +281,7 @@ class MsgListenerThread(threading.Thread):
                 try:
                     self.socket.bind('tcp://%s:%s' % (self.bind_address, port))
                     return
-                except socket.timeout:
+                except (socket.timeout, zmq.ZMQError):
                     pass
             raise MalacodaException('Could not find free port to connect to')
 
