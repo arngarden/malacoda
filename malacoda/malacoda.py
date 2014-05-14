@@ -298,12 +298,21 @@ class MsgListenerThread(threading.Thread):
     
 def get(name, **ssh_args):
     """ Return proxy for daemon with given name.
-    name should be on format <name>:<host> where host is optional if daemon is on localhost.
-    Raise exception or return None? if no daemon with name is found/running.
+    name should be on format <name>:<host>:<port> where host and port are optional
+    if daemon is on localhost or if we know the port already.
+    Raise exception if no daemon with name is found/running.
     TODO: Test proxy connection, if not working return None
     
     """
-    port = _get_port(name, **ssh_args)
+    if ':' in name:
+        try:
+            _, host, port = name.split(':')
+        except ValueError:
+            _, host = name.split(':')
+            port = _get_port(name, **ssh_args)
+    else:
+        host = 'localhost'
+        port = _get_port(name, **ssh_args)
     if not port:
         raise MalacodaException('Could not find port for process with name: %s' % name)
     if ':' in name:
