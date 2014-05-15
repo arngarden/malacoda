@@ -15,13 +15,13 @@ class TestMalacoda(unittest.TestCase):
     def setUp(self):
         with open(PST_FILE, 'wb') as f:
             pickle.dump([('pst_list', [1])], f)
-        p = Process(target=start_malacoda)
-        p.start()
         
     def tearDown(self):
         os.system('rm /tmp/pst_test.p')
 
     def test_malacoda(self):
+        p = Process(target=start_malacoda)
+        p.start()
         zp = malacoda.get('SimpleMalacoda')
         self.assertEqual(zp.pst_list, [1])
         zp.update_pst_list([1, 2, 3])
@@ -38,22 +38,35 @@ class TestMalacoda(unittest.TestCase):
         zp.stop()
         with open(PST_FILE, 'rb') as f:
             self.assertEqual(pickle.load(f), [('pst_list', [1, 2, 3])])
+        p.join()
 
-
-def start_malacoda():
-    SimpleMalacoda(daemonize=False)
+    def test_get_by_port(self):
+        p = Process(target=start_malacoda, kwargs={'port': 51001})
+        p.start()
+        zp = malacoda.get('SimpleMalacoda:51001')
+        self.assertEqual(zp.pst_list, [1])
+        zp.update_pst_list([1, 2, 3])
+        time.sleep(5)
+        zp.stop()
+        with open(PST_FILE, 'rb') as f:
+            self.assertEqual(pickle.load(f), [('pst_list', [1, 2, 3])])
+        p.join()
+            
+def start_malacoda(port=None):
+    SimpleMalacoda(daemonize=False, port=port)
 
 
 class SimpleMalacoda(malacoda.Malacoda):
-    def __init__(self, daemonize=False):
+    def __init__(self, daemonize=False, port=None):
         self.constant = 5
         self.pst_list = None
         stdout = open('/tmp/stdout', 'w+')
         pst_config = {'class_name': 'PstFileStorage', 'frequency': timedelta(seconds=2),
                       'file_path': PST_FILE}
         super(SimpleMalacoda, self).__init__(pst_config=pst_config,
-                                         daemonize=daemonize, stdout=stdout,
-                                         stderr=stdout, files_preserve=[stdout])
+                                             daemonize=daemonize, stdout=stdout,
+                                             stderr=stdout, files_preserve=[stdout],
+                                             port=port)
 
     def _run(self):
         while self.running:

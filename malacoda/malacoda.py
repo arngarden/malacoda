@@ -305,22 +305,26 @@ def get(name, **ssh_args):
     
     """
     if ':' in name:
-        try:
-            _, host, port = name.split(':')
-        except ValueError:
-            _, host = name.split(':')
-            port = _get_port(name, **ssh_args)
+        split = name.split(':')
+        if len(split) == 2:
+            try:
+                int(split[1])
+            except ValueError:
+                daemon_name, host = split
+                port = _get_port(name, **ssh_args)
+            else:
+                host = 'localhost'
+                daemon_name, port = split
+        else:
+            daemon_name, host, port = split
     else:
         host = 'localhost'
+        daemon_name = name
         port = _get_port(name, **ssh_args)
     if not port:
         raise MalacodaException('Could not find port for process with name: %s' % name)
-    if ':' in name:
-        name, host = name.split(':')
-    else:
-        host = 'localhost'
     address = '%s:%s' % (host, port)
-    zp = proxy.Proxy(name, address)
+    zp = proxy.Proxy(daemon_name, address)
     return zp
 
 
