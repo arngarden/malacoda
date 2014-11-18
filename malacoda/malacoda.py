@@ -48,7 +48,7 @@ class Malacoda(daemon.DaemonContext):
     DEFAULT_PST_CONFIG = {'class_name': 'PstFileStorage', 'frequency': timedelta(minutes=1)}
     
     def __init__(self, name=None, bind_address=None, port=None, daemonize=True,
-                 pst_config=None, start_worker=True, **kwargs):
+                 pst_config=None, start_worker=True, logger=None, **kwargs):
         """ Init Malacoda.
         Name of Malacoda can be overridden, else class name will be used.
         It is possible to override the address and port used for communicating with the Malacoda.
@@ -72,14 +72,24 @@ class Malacoda(daemon.DaemonContext):
                               For example {'class_name': 'PstFileStorage',
                                            'frequency': timedelta(minutes=5)}
          - start_worker (bool): If True, the _run-method will be executed at end of init.
-         - kwargs: Optional keyword arguments that are sent to daemon.DaemonContext
+         - logger (Instance of logging.Logger): Logger.
+         - kwargs: Optional keyword arguments that are sent to daemon.DaemonContext.
          
         """
         if daemonize:
             super(Malacoda, self).__init__(**kwargs)
+            self.signal_map = {signal.SIGTERM: lambda signum, frame: self.stop()}
+        self.name = name or self.__class__.__name__
+        if not logger:
+            import logging
+            self.logger = logging.getLogger(name)
+            self.logger.addHandler(logging.StreamHandler(sys.stdout))
+        else:
+            self.logger = logger
+        self.logger.info('Init Malacoda: name={}, bind_address={}, port={}, daemonize={}'
+                         ''.format(self.name, bind_address, port, daemonize))
         self.running = False
         self.finished = False
-        self.name = name or self.__class__.__name__
         setproctitle.setproctitle(self.name)
         self.daemonize = daemonize
         pst_config = pst_config or deepcopy(self.DEFAULT_PST_CONFIG)
@@ -105,8 +115,10 @@ class Malacoda(daemon.DaemonContext):
         """
         self.running = True
         if self.daemonize:
+            self.logger.info('Going into daemon mode')
             self.open()
         if start_worker:
+            self.logger.info('Starting worker')
             self._start_msg_listener(bind_address, port)
             self._run()
 
@@ -131,17 +143,14 @@ class Malacoda(daemon.DaemonContext):
         raise NotImplemented
 
     def _load_pst(self):
-        """ Load variables from persistant storage.
-        
-        """
+        """ Load variables from persistant storage. """
         psts = self.persistant_storage.load()
         if psts:
             for name, value in psts:
                 setattr(self, name, value)
 
     def _pst_handler(self):
-        """ Loop that calls self.persistant_storage.save
-        """
+        """ Loop that calls self.persistant_storage.save. """
         self.last_pst = datetime.utcnow()
         while self.running:
             if self.last_pst + self.persistant_storage.frequency <= datetime.utcnow():
@@ -231,8 +240,8 @@ class Malacoda(daemon.DaemonContext):
         return rep_msg
 
     def stop(self):
-        """ Stop the daemon.
-        """
+        """ Stop the daemon. """
+        self.logger.info('Stopping')
         self.running = False
         if self.daemonize:
             self.close()
@@ -290,7 +299,10 @@ class MsgListenerThread(threading.Thread):
 
         """
         while self.malacoda_obj.running:
-            payload = self.socket.recv(timeout=None)
+            try:
+                payload = self.socket.recv(timeout=1)
+            except socket.timeout:
+                continue
             msg = REQMessage.deserialize(payload) 
             rep_msg = self.malacoda_obj.evaluate(msg)
             self.socket.send(rep_msg.serialize() or '', timeout=None)
