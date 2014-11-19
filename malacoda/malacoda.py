@@ -79,6 +79,8 @@ class Malacoda(daemon.DaemonContext):
         if daemonize:
             super(Malacoda, self).__init__(**kwargs)
             self.signal_map = {signal.SIGTERM: lambda signum, frame: self.stop()}
+        else:
+            signal.signal(signal.SIGTERM, lambda signum, frame: self.stop())
         self.name = name or self.__class__.__name__
         if not logger:
             import logging
