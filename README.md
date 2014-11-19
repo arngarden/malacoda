@@ -103,8 +103,7 @@ You can call methods, access class attributes, and set class attributes just as 
 
 Stopping a daemon
 -----------------
-If you have started your daemon with the argument *daemonize=True* you need to connect to the daemon in order to stop it safely.
-If you have a proxy connected you can call the method *stop()*, there is also a helper function in malacoda.py named *stop* that connects to and stops the daemon with given name.
+The correct way of stopping a daemon is to call its *stop*-method. This can either be done by connecting to the daemon and calling the method explicitly, or by sending a SIGTERM-signal to the daemon process. There is also a helper function in malacoda.py named *stop* that connects to and stops the daemon with given name.
 
 Persistant storage
 ------------------
