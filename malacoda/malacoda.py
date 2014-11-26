@@ -87,7 +87,7 @@ class Malacoda(daemon.DaemonContext):
         if not logger:
             import logging
             self.logger = logging.getLogger(name)
-            self.logger.addHandler(logging.StreamHandler(sys.stdout))
+            #self.logger.addHandler(logging.StreamHandler(sys.stdout))
         else:
             self.logger = logger
         self.logger.info('Init Malacoda: name={}, bind_address={}, port={}, daemonize={}'
